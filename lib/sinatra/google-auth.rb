@@ -32,23 +32,22 @@ module Sinatra
           end
         end
       end
-      
+
       def handle_authentication_callback
         unless session["user"]
           user_info = request.env["omniauth.auth"].info
           on_user(user_info) if respond_to? :on_user
-          session["user"] = Array(user_info.email).first.downcase
+          session["user"] = user_info.email.downcase
         end
-        
         url = session['google-auth-redirect'] || to("/")
         redirect url
       end
     end
-    
+
     def self.secret
       ENV['SESSION_SECRET'] || ENV['SECURE_KEY'] || SecureRandom.hex(64)
     end
-    
+
     def self.registered(app)
       raise "Must supply ENV var GOOGLE_CLIENT_ID" unless ENV['GOOGLE_CLIENT_ID']
       raise "Must supply ENV var GOOGLE_CLIENT_SECRET" unless ENV['GOOGLE_CLIENT_SECRET']
@@ -57,18 +56,18 @@ module Sinatra
       app.use ::OmniAuth::Builder do
         provider :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], { provider_ignores_state: true }
       end
-      
+
       app.set :absolute_redirect, false
-      
+
       app.get "/auth/:provider/callback" do
         handle_authentication_callback
       end
-      
+
       app.post "/auth/:provider/callback" do
         handle_authentication_callback
       end
     end
   end
-  
+
   register GoogleAuth
 end
